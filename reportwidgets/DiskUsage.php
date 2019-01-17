@@ -1,6 +1,7 @@
 <?php namespace Walid\DiskUsage\ReportWidgets;
 
 use Log;
+use Backend;
 use Backend\Classes\ReportWidgetBase;
 use Walid\DiskUsage\Models\Settings;
 
@@ -32,7 +33,9 @@ class DiskUsage extends ReportWidgetBase
     public function getDisks()
     {
         if (!$this->disks) {
-            $this->disks = array_reduce(Settings::get('disks'), function($carry, $disk) {
+            $disks = Settings::get('disks') ?: [];
+
+            $this->disks = array_reduce($disks, function($carry, $disk) {
                 $carry[] = $disk + [
                     'free_space' => $this->formatBytes(disk_free_space($disk['path'])),
                     'total_space' => $this->formatBytes(disk_total_space($disk['path'])),
@@ -57,7 +60,7 @@ class DiskUsage extends ReportWidgetBase
             }));
 
             if (!$disk) {
-                $this->error = 'Unable to find selected disk, please select a disk from widget options';
+                $this->error = 'Unable to find disk, please <a href="'.$this->getPluginSettingsUrl().'">add some disks</a> then select a disk from widget options';
                 return null;
             }
 
@@ -84,5 +87,10 @@ class DiskUsage extends ReportWidgetBase
 
             $formatted = "$number $prefix";
             return compact('prefix', 'number', 'formatted');
+        }
+
+        public function getPluginSettingsUrl()
+        {
+            return Backend::url('system/settings/update/walid/diskusage/settings');
         }
     }
